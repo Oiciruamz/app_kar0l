@@ -65,7 +65,11 @@ service cloud.firestore {
                       // Patient releasing a hold (returning slot to available)
                       (isPatient() && resource.data.status == 'on_hold' && 
                        resource.data.holdBy == request.auth.uid &&
-                       request.resource.data.status == 'available')
+                       request.resource.data.status == 'available') ||
+                      // Patient cancelling appointment (freeing booked slot)
+                      (isPatient() && resource.data.status == 'booked' && 
+                       request.resource.data.status == 'available' &&
+                       request.resource.data.appointmentId == null)
                     );
       
       // Only the slot's doctor can delete their slots
