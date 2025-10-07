@@ -1,0 +1,262 @@
+{
+    "meta": {
+      "name": "Martínez Cantú - Especialistas Dentales",
+      "version": "0.9.0",
+      "source": {
+        "figma_file_key": "",
+        "exported_at": "2025-10-05T00:00:00Z"
+      }
+    },
+    "design_tokens": {
+      "color": {
+        "palette": {
+          "primary": {
+            "50": "#EDDDE9",
+            "100": "#ECDCE9",
+            "200": "#D3CED2",
+            "300": "#B7ACB4",
+            "400": "#988292",
+            "600": "#73506E",
+            "DEFAULT": "#73506E"
+          },
+          "neutral": {
+            "0": "#FFFFFF",
+            "50": "#F4F4F5",
+            "100": "#E9E9E9",
+            "200": "#DFDDDF",
+            "300": "#EAE7EA",
+            "900": "#0F172A"
+          },
+          "accent": {
+            "lavender": "#EDE1EC",
+            "banner": "#EDDDE9"
+          },
+          "feedback": {
+            "success": "#22C55E",
+            "warning": "#F59E0B",
+            "error": "#EF4444",
+            "info": "#3B82F6"
+          }
+        },
+        "alias": {
+          "bg.app": "{color.palette.accent.banner}",
+          "bg.card": "{color.palette.neutral.0}",
+          "text.primary": "{color.palette.neutral.900}",
+          "text.muted": "#6B7280",
+          "brand": "{color.palette.primary.DEFAULT}",
+          "brand.strong": "{color.palette.primary.600}",
+          "surface": "{color.palette.neutral.0}",
+          "border": "{color.palette.neutral.200}"
+        }
+      },
+      "typography": {
+        "families": {
+          "sans": "SF Pro Text, Inter, system-ui, -apple-system, Segoe UI, Roboto",
+          "serif": "ui-serif, Georgia",
+          "mono": "JetBrains Mono, ui-monospace, SFMono-Regular"
+        },
+        "scale": {
+          "display": { "fontSize": 32, "lineHeight": 40, "weight": 700, "letterSpacing": -0.01 },
+          "h1": { "fontSize": 24, "lineHeight": 32, "weight": 700 },
+          "h2": { "fontSize": 20, "lineHeight": 28, "weight": 600 },
+          "body": { "fontSize": 16, "lineHeight": 24, "weight": 400 },
+          "caption": { "fontSize": 12, "lineHeight": 16, "weight": 400 }
+        }
+      },
+      "spacing": { "xs": 4, "sm": 8, "md": 12, "lg": 16, "xl": 24, "2xl": 32 },
+      "radius": { "sm": 6, "md": 10, "lg": 12, "xl": 16, "pill": 999 },
+      "shadow": {
+        "sm": { "x": 0, "y": 1, "blur": 2, "spread": 0, "color": "rgba(0,0,0,0.08)" },
+        "md": { "x": 0, "y": 4, "blur": 12, "spread": 0, "color": "rgba(0,0,0,0.10)" }
+      },
+      "motion": {
+        "duration": { "fast": 120, "base": 200, "slow": 300 },
+        "easing": { "standard": "cubic-bezier(0.2, 0, 0, 1)" }
+      },
+      "grid": {
+        "mobile": { "columns": 4, "gutter": 8, "margin": 16 },
+        "phoneTall": { "columns": 6, "gutter": 12, "margin": 16 }
+      }
+    },
+    "components": [
+      {
+        "name": "AppBar",
+        "description": "Barra superior con logotipo y emblema",
+        "props": { "title": "string", "showBack": "boolean", "showBadge": "boolean" },
+        "tokens_map": {
+          "height": 56,
+          "bg": "{design_tokens.color.alias.bg.app}",
+          "title.color": "{design_tokens.color.alias.text.primary}"
+        },
+        "a11y": { "role": "banner" }
+      },
+      {
+        "name": "BottomTabBar",
+        "description": "Navegación inferior (5 íconos)",
+        "props": { "items": "TabItem[]", "activeIndex": "number" },
+        "tokens_map": {
+          "bg": "{design_tokens.color.palette.accent.banner}",
+          "icon.active": "{design_tokens.color.alias.brand.strong}",
+          "icon.inactive": "{design_tokens.color.alias.text.muted}"
+        },
+        "a11y": { "role": "tablist", "min_touch_target": 44 }
+      },
+      {
+        "name": "Card.DoctorItem",
+        "description": "Tarjeta list item con avatar, nombre, especialidad y botón 'Ver'",
+        "props": { "name": "string", "specialty": "string", "photo": "url", "onPress": "function" },
+        "tokens_map": {
+          "bg": "{design_tokens.color.alias.bg.card}",
+          "radius": "{design_tokens.radius.lg}",
+          "shadow": "{design_tokens.shadow.sm}",
+          "padding": "{design_tokens.spacing.md}",
+          "cta.bg": "{design_tokens.color.alias.brand.strong}",
+          "cta.text": "{design_tokens.color.palette.neutral.0}"
+        },
+        "states": ["default", "pressed", "disabled"]
+      },
+      {
+        "name": "Button",
+        "description": "Botón principal (píldora) usado para Iniciar/Agendar/Aceptar",
+        "props": { "variant": ["primary", "secondary", "ghost"], "size": ["md"], "disabled": "boolean" },
+        "tokens_map": {
+          "primary.bg": "{design_tokens.color.alias.brand.strong}",
+          "primary.text": "{design_tokens.color.palette.neutral.0}",
+          "secondary.bg": "{design_tokens.color.palette.neutral.100}",
+          "secondary.text": "{design_tokens.color.alias.text.primary}",
+          "radius": "{design_tokens.radius.pill}",
+          "padding.x": "{design_tokens.spacing.lg}",
+          "padding.y": "{design_tokens.spacing.sm}"
+        },
+        "a11y": { "min_touch_target": 44, "focus_ring": { "style": "outline", "offset": 2 } }
+      },
+      {
+        "name": "Field.Text",
+        "description": "Input de una línea (usuario, contraseña, teléfono, motivo)",
+        "props": { "label": "string", "placeholder": "string", "state": ["default", "error", "success"], "helperText": "string" },
+        "tokens_map": {
+          "bg": "{design_tokens.color.palette.neutral.0}",
+          "border": "{design_tokens.color.alias.border}",
+          "radius": "{design_tokens.radius.sm}"
+        },
+        "a11y": { "label_required": true }
+      },
+      {
+        "name": "Field.Select",
+        "description": "Selector de dentista",
+        "props": { "label": "string", "options": "Option[]", "state": ["default","error"] },
+        "tokens_map": { "radius": "{design_tokens.radius.sm}" }
+      },
+      {
+        "name": "Calendar.Month",
+        "description": "Calendario de fecha (mes) en agenda",
+        "props": { "value": "Date", "min": "Date", "max": "Date", "onChange": "function" },
+        "legend": { "Disponible": "#EAE7EA", "Agendado": "#B7ACB4", "Seleccionado": "#73506E" }
+      },
+      {
+        "name": "TimeSlot.Grid",
+        "description": "Matriz de horarios disponibles/ocupados",
+        "props": { "slots": "TimeSlot[]", "onSelect": "function" },
+        "states": ["available", "booked", "selected"]
+      },
+      {
+        "name": "Modal/Toast",
+        "description": "Mensajes 'Tu cita se agendó…' y 'Ese horario acaba de agendarse…'",
+        "props": { "type": ["success","warning","info"], "message": "string", "actions": "Action[]" },
+        "tokens_map": {
+          "success.bg": "{design_tokens.color.palette.neutral.0}",
+          "accent": "{design_tokens.color.alias.brand.strong}"
+        },
+        "a11y": { "role": "alertdialog" }
+      },
+      {
+        "name": "List.AppointmentsItem",
+        "description": "Item de 'Mis citas' con estado",
+        "props": { "doctor": "string", "dateTime": "string", "status": ["Agendada","Cancelada","Completada"] },
+        "tokens_map": {
+          "status.Agendada": "{design_tokens.color.palette.feedback.success}",
+          "status.Cancelada": "{design_tokens.color.palette.feedback.error}"
+        }
+      }
+    ],
+    "patterns": [
+      {
+        "name": "Auth.Login",
+        "intent": "Ingreso de usuarios",
+        "composition": ["LogoDent", "BrandTitle", "Field.Text:Usuario", "Field.Text:Contraseña", "Link:Recuperar", "Button:Iniciar"],
+        "rules": [
+          "Campos con placeholders claros",
+          "En móviles, evitar teclado predictivo para contraseña",
+          "CTA deshabilitado hasta que ambos campos sean válidos"
+        ],
+        "validation": { "strategy": "onBlur + onSubmit" }
+      },
+      {
+        "name": "Directory.Dentists",
+        "intent": "Explorar dentistas",
+        "composition": ["AppBar", "List{Card.DoctorItem}", "BottomTabBar"],
+        "rules": ["Tarjetas con sombra sutil", "Botón 'Ver' como acción secundaria"]
+      },
+      {
+        "name": "Appointment.Schedule",
+        "intent": "Flujo de agendar cita",
+        "composition": [
+          "Field.Select:Dentista",
+          "Calendar.Month",
+          "TimeSlot.Grid",
+          "Field.Text:Teléfono",
+          "Field.Text:Motivo",
+          "Button:Agendar"
+        ],
+        "rules": [
+          "Deshabilitar Agendar hasta tener dentista, fecha y horario",
+          "Mostrar feedback optimista en éxito",
+          "Bloquear horario justo-agendado con modal de aviso"
+        ]
+      },
+      {
+        "name": "Appointments.MyList",
+        "intent": "Historial y estado de citas",
+        "composition": ["Heading", "List{List.AppointmentsItem}", "Button:Agendar (secundario)"],
+        "rules": ["Estados con color accesible", "Separadores sutiles"]
+      }
+    ],
+    "accessibility": {
+      "color_contrast_min": 4.5,
+      "focus_visible_required": true,
+      "motion_reduction_supported": true,
+      "lang_default": "es-MX",
+      "min_touch_target": 44
+    },
+    "content_style": {
+      "tone": "amable, claro, clínico",
+      "microcopy": {
+        "empty_state": "Aún no hay citas.",
+        "error_generic": "Ocurrió un problema. Intenta de nuevo.",
+        "schedule_success": "Tu cita se agendó correctamente.",
+        "schedule_conflict": "Ese horario acaba de agendarse. Elige otro."
+      }
+    },
+    "theming": {
+      "modes": ["light"],
+      "strategy": "data-attribute",
+      "css_variables_prefix": "dent"
+    },
+    "code_mapping": {
+      "tailwind": {
+        "vars": {
+          "--dent-bg-app": "{design_tokens.color.alias.bg.app}",
+          "--dent-brand": "{design_tokens.color.alias.brand}",
+          "--dent-brand-strong": "{design_tokens.color.alias.brand.strong}"
+        },
+        "button": {
+          "base": "inline-flex items-center justify-center rounded-full font-medium",
+          "primary": "bg-[var(--dent-brand-strong)] text-white hover:opacity-90",
+          "secondary": "bg-neutral-100 text-neutral-900",
+          "size.md": "h-11 px-5 text-[16px]"
+        },
+        "card": "rounded-[12px] bg-white shadow-sm p-3"
+      }
+    }
+  }
+  

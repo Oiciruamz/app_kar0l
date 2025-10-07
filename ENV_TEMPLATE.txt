@@ -1,0 +1,42 @@
+# ====================================================================
+# INSTRUCCIONES: Crear archivo .env en la raíz del proyecto
+# ====================================================================
+#
+# 1. Crea un nuevo archivo llamado exactamente: .env
+# 2. Copia las líneas de abajo en ese archivo
+# 3. Reemplaza los valores con tus credenciales de Firebase
+#
+# ====================================================================
+
+EXPO_PUBLIC_FIREBASE_API_KEY=AIzaSy...
+EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN=tu-proyecto.firebaseapp.com
+EXPO_PUBLIC_FIREBASE_PROJECT_ID=tu-proyecto-id
+EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET=tu-proyecto.appspot.com
+EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=123456789012
+EXPO_PUBLIC_FIREBASE_APP_ID=1:123456789012:web:abc123def456
+
+# ====================================================================
+# CÓMO OBTENER TUS CREDENCIALES DE FIREBASE:
+# ====================================================================
+#
+# 1. Ve a https://console.firebase.google.com
+# 2. Selecciona tu proyecto (o crea uno nuevo)
+# 3. Ve a "Configuración del proyecto" (ícono de engranaje)
+# 4. En la sección "Tus apps", selecciona la app web o crea una
+# 5. Verás la configuración de Firebase (firebaseConfig)
+# 6. Copia los valores correspondientes:
+#    - apiKey → EXPO_PUBLIC_FIREBASE_API_KEY
+#    - authDomain → EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN
+#    - projectId → EXPO_PUBLIC_FIREBASE_PROJECT_ID
+#    - storageBucket → EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET
+#    - messagingSenderId → EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+#    - appId → EXPO_PUBLIC_FIREBASE_APP_ID
+#
+# ====================================================================
+# IMPORTANTE: 
+# - NO compartas este archivo .env con nadie
+# - NO lo subas a GitHub (ya está en .gitignore)
+# - Cada desarrollador debe crear su propio .env
+# ====================================================================
+
+

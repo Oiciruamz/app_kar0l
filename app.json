@@ -1,0 +1,22 @@
+{
+  "expo": {
+    "name": "Martínez Cantú - Dental",
+    "slug": "app-karol-dental",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#EDDDE9"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.martinezcantu.dental"
+    },
+    "android": {
+      "package": "com.martinezcantu.dental"
+    },
+    "scheme": "dentapp",
+    "plugins": ["expo-router"]
+  }
+}
+

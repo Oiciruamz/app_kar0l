@@ -1,0 +1,120 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function to get user role
+    function getUserRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isDoctor() {
+      return isAuthenticated() && getUserRole() == 'doctor';
+    }
+    
+    function isPatient() {
+      return isAuthenticated() && getUserRole() == 'patient';
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Users collection
+    match /users/{userId} {
+      // Anyone can read doctor profiles (for patient to browse)
+      allow read: if isAuthenticated();
+      
+      // Users can only create their own profile during registration
+      allow create: if isAuthenticated() && request.auth.uid == userId;
+      
+      // Users can only update their own profile
+      allow update: if isOwner(userId);
+      
+      // No deletes
+      allow delete: if false;
+    }
+
+    // Slots collection
+    match /slots/{slotId} {
+      // Anyone authenticated can read slots (to see availability)
+      allow read: if isAuthenticated();
+      
+      // Only doctors can create slots for themselves
+      allow create: if isDoctor() && 
+                      request.resource.data.doctorId == request.auth.uid &&
+                      request.resource.data.status == 'available' &&
+                      request.resource.data.capacity == 1;
+      
+      // Doctors can update their own slots, patients can hold/book slots
+      allow update: if isAuthenticated() && (
+                      // Doctor updating their own slot
+                      (isDoctor() && resource.data.doctorId == request.auth.uid) ||
+                      // Patient holding a slot
+                      (isPatient() && resource.data.status == 'available' && 
+                       request.resource.data.status == 'on_hold' && 
+                       request.resource.data.holdBy == request.auth.uid) ||
+                      // Patient booking a slot they're holding
+                      (isPatient() && resource.data.status == 'on_hold' && 
+                       resource.data.holdBy == request.auth.uid &&
+                       request.resource.data.status == 'booked') ||
+                      // Patient releasing a hold (returning slot to available)
+                      (isPatient() && resource.data.status == 'on_hold' && 
+                       resource.data.holdBy == request.auth.uid &&
+                       request.resource.data.status == 'available')
+                    );
+      
+      // Only the slot's doctor can delete their slots
+      // But only if not booked
+      allow delete: if isDoctor() && 
+                      resource.data.doctorId == request.auth.uid &&
+                      resource.data.status == 'available';
+    }
+
+    // Appointments collection
+    match /appointments/{appointmentId} {
+      // Doctors can read their appointments
+      // Patients can read their appointments
+      allow read: if isAuthenticated() && 
+                    (resource.data.doctorId == request.auth.uid || 
+                     resource.data.patientId == request.auth.uid);
+      
+      // Patients can create their own appointments
+      allow create: if isAuthenticated() && 
+                      isPatient() && 
+                      request.resource.data.patientId == request.auth.uid;
+      
+      // Users can update/cancel their own appointments
+      allow update: if isAuthenticated() && 
+                      (resource.data.doctorId == request.auth.uid || 
+                       resource.data.patientId == request.auth.uid);
+      
+      // No direct deletes
+      allow delete: if false;
+    }
+
+    // Holds collection (temporal holds for booking flow)
+    match /holds/{holdId} {
+      // Patients can read their own holds
+      allow read: if isAuthenticated() && 
+                    resource.data.patientId == request.auth.uid;
+      
+      // Patients can create holds for themselves
+      allow create: if isAuthenticated() && 
+                      isPatient() && 
+                      request.resource.data.patientId == request.auth.uid;
+      
+      // No updates
+      allow update: if false;
+      
+      // Patients can delete their own holds (to cancel reservation)
+      allow delete: if isAuthenticated() && 
+                      resource.data.patientId == request.auth.uid;
+    }
+  }
+}
+

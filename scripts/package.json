@@ -1,0 +1,13 @@
+{
+  "name": "database-seed-scripts",
+  "version": "1.0.0",
+  "description": "Scripts para poblar la base de datos de la aplicación",
+  "scripts": {
+    "seed": "node seedDatabase.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.0.0",
+    "date-fns": "^2.30.0"
+  }
+}
+
