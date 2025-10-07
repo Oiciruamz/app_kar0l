@@ -4,6 +4,39 @@
 const admin = require('firebase-admin');
 const { format, addDays, addMinutes, startOfDay, setHours, setMinutes } = require('date-fns');
 
+// URLs de imágenes de doctores profesionales de Unsplash
+const DOCTOR_IMAGES = [
+  // Odontología General
+  'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=400&h=400&fit=crop&crop=face',
+  'https://images.unsplash.com/photo-1582750433449-648ed127bb54?w=400&h=400&fit=crop&crop=face',
+  'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=400&h=400&fit=crop&crop=face',
+  
+  // Ortodoncia
+  'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=400&h=400&fit=crop&crop=face',
+  'https://images.unsplash.com/photo-1582750433449-648ed127bb54?w=400&h=400&fit=crop&crop=face',
+  
+  // Endodoncia
+  'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=400&h=400&fit=crop&crop=face',
+  'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=400&h=400&fit=crop&crop=face',
+  
+  // Periodoncia
+  'https://images.unsplash.com/photo-1582750433449-648ed127bb54?w=400&h=400&fit=crop&crop=face',
+  'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=400&h=400&fit=crop&crop=face',
+  
+  // Cirugía Maxilofacial
+  'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=400&h=400&fit=crop&crop=face',
+  'https://images.unsplash.com/photo-1582750433449-648ed127bb54?w=400&h=400&fit=crop&crop=face',
+  
+  // Odontopediatría
+  'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=400&h=400&fit=crop&crop=face',
+  'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=400&h=400&fit=crop&crop=face',
+];
+
+// Función para obtener imagen de doctor por índice
+function getDoctorImage(index) {
+  return DOCTOR_IMAGES[index % DOCTOR_IMAGES.length];
+}
+
 // Inicializar Firebase Admin
 const serviceAccount = require('../serviceAccountKey.json');
 
@@ -23,7 +56,7 @@ const doctors = [
     phone: '8111234567',
     specialty: 'Odontología General',
     bio: 'Especialista en odontología general con 15 años de experiencia. Enfoque en tratamientos preventivos y estética dental.',
-    photoURL: 'https://i.pravatar.cc/150?img=12'
+    photoURL: getDoctorImage(0)
   },
   {
     email: 'dra.martinez@clinica.com',
@@ -32,7 +65,7 @@ const doctors = [
     phone: '8111234568',
     specialty: 'Ortodoncia',
     bio: 'Ortodoncista certificada especializada en brackets invisibles y ortodoncia digital. Más de 1000 casos exitosos.',
-    photoURL: 'https://i.pravatar.cc/150?img=5'
+    photoURL: getDoctorImage(3)
   },
   {
     email: 'dr.lopez@clinica.com',
@@ -41,7 +74,7 @@ const doctors = [
     phone: '8111234569',
     specialty: 'Endodoncia',
     bio: 'Endodoncista con maestría internacional. Especialista en tratamientos de conducto y cirugía endodóntica.',
-    photoURL: 'https://i.pravatar.cc/150?img=33'
+    photoURL: getDoctorImage(5)
   },
   {
     email: 'dra.rodriguez@clinica.com',
@@ -50,7 +83,7 @@ const doctors = [
     phone: '8111234570',
     specialty: 'Periodoncia',
     bio: 'Periodoncista experta en salud de las encías y colocación de implantes dentales.',
-    photoURL: 'https://i.pravatar.cc/150?img=9'
+    photoURL: getDoctorImage(7)
   },
   {
     email: 'dr.hernandez@clinica.com',
@@ -59,7 +92,7 @@ const doctors = [
     phone: '8111234571',
     specialty: 'Cirugía Maxilofacial',
     bio: 'Cirujano maxilofacial con especialización en cirugía reconstructiva y estética facial.',
-    photoURL: 'https://i.pravatar.cc/150?img=15'
+    photoURL: getDoctorImage(9)
   },
   {
     email: 'dra.torres@clinica.com',
@@ -68,7 +101,7 @@ const doctors = [
     phone: '8111234572',
     specialty: 'Odontopediatría',
     bio: 'Odontopediatra dedicada al cuidado dental de niños y adolescentes. Ambiente amigable y sin estrés.',
-    photoURL: 'https://i.pravatar.cc/150?img=20'
+    photoURL: getDoctorImage(11)
   }
 ];
 
