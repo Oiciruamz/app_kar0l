@@ -110,3 +110,4 @@ async function updateDoctorImages() {
 
 // Ejecutar la actualización
 updateDoctorImages();
+

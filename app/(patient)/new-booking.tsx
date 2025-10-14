@@ -133,7 +133,19 @@ export default function NewBookingScreen() {
       if (result.success) {
         setShowSuccessModal(true);
       } else {
-        Alert.alert('Error', result.error || 'Error al agendar cita');
+        // Mostrar mensajes de error más específicos
+        const errorMessage = result.error || 'Error al agendar cita';
+        let alertTitle = 'Error';
+        
+        if (errorMessage.includes('Ya tienes una cita agendada con este doctor')) {
+          alertTitle = 'Cita Duplicada';
+        } else if (errorMessage.includes('Ya tienes una cita agendada en este horario')) {
+          alertTitle = 'Conflicto de Horario';
+        } else if (errorMessage.includes('reserva expiró')) {
+          alertTitle = 'Reserva Expirada';
+        }
+        
+        Alert.alert(alertTitle, errorMessage);
         handleCancelHold();
       }
     } catch (error: any) {

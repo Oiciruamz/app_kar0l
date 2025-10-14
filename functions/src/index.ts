@@ -8,6 +8,23 @@ const db = admin.firestore();
 // Configurar región para las Cloud Functions
 const region = 'us-central1';
 
+// Función auxiliar para verificar solapamiento de horarios
+function isTimeOverlap(start1: string, end1: string, start2: string, end2: string): boolean {
+  // Convertir strings de tiempo a minutos desde medianoche
+  const timeToMinutes = (time: string): number => {
+    const [hours, minutes] = time.split(':').map(Number);
+    return hours * 60 + minutes;
+  };
+  
+  const start1Min = timeToMinutes(start1);
+  const end1Min = timeToMinutes(end1);
+  const start2Min = timeToMinutes(start2);
+  const end2Min = timeToMinutes(end2);
+  
+  // Dos rangos se solapan si uno empieza antes de que termine el otro
+  return start1Min < end2Min && start2Min < end1Min;
+}
+
 // Types
 interface HoldSlotRequest {
   doctorId: string;
@@ -150,42 +167,81 @@ export const bookSlot = functions.region(region).https.onCall(
       }
       const userData = userDoc.data();
 
+      // VALIDACIÓN: Verificar restricciones de citas antes de proceder
+      const holdDoc = await db.collection('holds').doc(holdId).get();
+      if (!holdDoc.exists) {
+        return { success: false, error: 'La reserva expiró. Selecciona otro horario.' };
+      }
+
+      const holdData = holdDoc.data();
+      if (!holdData) {
+        return { success: false, error: 'Datos de reserva inválidos' };
+      }
+
+      // Verificar que el hold pertenece al usuario
+      if (holdData.patientId !== patientId) {
+        return { success: false, error: 'Reserva inválida' };
+      }
+
+      // Verificar que no expiró
+      const now = admin.firestore.Timestamp.now();
+      if (holdData.expiresAt.toMillis() < now.toMillis()) {
+        return { success: false, error: 'La reserva expiró. Selecciona otro horario.' };
+      }
+
+      // Obtener información del slot para las validaciones
+      const slotDoc = await db.collection('slots').doc(holdData.slotId).get();
+      if (!slotDoc.exists) {
+        return { success: false, error: 'Horario no encontrado' };
+      }
+
+      const slotData = slotDoc.data();
+      if (!slotData) {
+        return { success: false, error: 'Datos de horario inválidos' };
+      }
+
+      // Verificar que el slot está en hold
+      if (slotData.status !== 'on_hold') {
+        return { success: false, error: 'El horario ya no está disponible' };
+      }
+
+      // VALIDACIONES DE RESTRICCIONES DE CITAS
+      // 1. Verificar si ya tiene cita con este doctor
+      const existingDoctorAppointments = await db.collection('appointments')
+        .where('patientId', '==', patientId)
+        .where('doctorId', '==', slotData.doctorId)
+        .where('status', '==', 'Agendada')
+        .get();
+
+      if (!existingDoctorAppointments.empty) {
+        return { 
+          success: false, 
+          error: 'Ya tienes una cita agendada con este doctor' 
+        };
+      }
+
+      // 2. Verificar si tiene conflicto de horario con otra cita
+      const conflictingAppointments = await db.collection('appointments')
+        .where('patientId', '==', patientId)
+        .where('date', '==', slotData.date)
+        .where('status', '==', 'Agendada')
+        .get();
+
+      // Verificar solapamiento de horarios
+      for (const doc of conflictingAppointments.docs) {
+        const appointment = doc.data();
+        if (isTimeOverlap(slotData.startTime, slotData.endTime, appointment.startTime, appointment.endTime)) {
+          return { 
+            success: false, 
+            error: 'Ya tienes una cita agendada en este horario con otro doctor' 
+          };
+        }
+      }
+
       // Run transaction
       const appointmentId = await db.runTransaction(async (transaction) => {
         const holdRef = db.collection('holds').doc(holdId);
-        const holdDoc = await transaction.get(holdRef);
-
-        if (!holdDoc.exists) {
-          throw new Error('La reserva expiró. Selecciona otro horario.');
-        }
-
-        const holdData = holdDoc.data();
-
-        // Verify hold belongs to this user
-        if (holdData?.patientId !== patientId) {
-          throw new Error('Reserva inválida');
-        }
-
-        // Check if hold expired
-        const now = admin.firestore.Timestamp.now();
-        if (holdData?.expiresAt.toMillis() < now.toMillis()) {
-          throw new Error('La reserva expiró. Selecciona otro horario.');
-        }
-
-        // Get slot
         const slotRef = db.collection('slots').doc(holdData.slotId);
-        const slotDoc = await transaction.get(slotRef);
-
-        if (!slotDoc.exists) {
-          throw new Error('Horario no encontrado');
-        }
-
-        const slotData = slotDoc.data();
-
-        // Verify slot is on hold
-        if (slotData?.status !== 'on_hold') {
-          throw new Error('El horario ya no está disponible');
-        }
 
         // Get doctor info
         const doctorDoc = await transaction.get(

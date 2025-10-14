@@ -126,3 +126,4 @@ Para verificar que las imágenes se están cargando correctamente:
 - Se recomienda implementar un sistema de caché para mejor rendimiento
 - Las imágenes están optimizadas para dispositivos móviles
 - Compatible con React Native y Expo
+

@@ -8,10 +8,31 @@ import {
   updateDoc, 
   deleteDoc, 
   Timestamp,
-  runTransaction
+  runTransaction,
+  collection,
+  query,
+  where,
+  getDocs
 } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 import { HoldSlotRequest, HoldSlotResponse, BookSlotRequest, BookSlotResponse } from '@/lib/types';
+
+// Función auxiliar para verificar solapamiento de horarios
+function isTimeOverlap(start1: string, end1: string, start2: string, end2: string): boolean {
+  // Convertir strings de tiempo a minutos desde medianoche
+  const timeToMinutes = (time: string): number => {
+    const [hours, minutes] = time.split(':').map(Number);
+    return hours * 60 + minutes;
+  };
+  
+  const start1Min = timeToMinutes(start1);
+  const end1Min = timeToMinutes(end1);
+  const start2Min = timeToMinutes(start2);
+  const end2Min = timeToMinutes(end2);
+  
+  // Dos rangos se solapan si uno empieza antes de que termine el otro
+  return start1Min < end2Min && start2Min < end1Min;
+}
 
 /**
  * Reservar un horario temporalmente (2 minutos)
@@ -136,6 +157,45 @@ export async function bookSlot(request: BookSlotRequest): Promise<BookSlotRespon
 
     if (slotData.status !== 'on_hold') {
       return { success: false, error: 'El horario ya no está disponible' };
+    }
+
+    // VALIDACIONES DE RESTRICCIONES DE CITAS
+    // 1. Verificar si ya tiene cita con este doctor
+    const existingDoctorAppointments = await getDocs(
+      query(
+        collection(db, 'appointments'),
+        where('patientId', '==', patientId),
+        where('doctorId', '==', slotData.doctorId),
+        where('status', '==', 'Agendada')
+      )
+    );
+
+    if (!existingDoctorAppointments.empty) {
+      return { 
+        success: false, 
+        error: 'Ya tienes una cita agendada con este doctor' 
+      };
+    }
+
+    // 2. Verificar si tiene conflicto de horario con otra cita
+    const conflictingAppointments = await getDocs(
+      query(
+        collection(db, 'appointments'),
+        where('patientId', '==', patientId),
+        where('date', '==', slotData.date),
+        where('status', '==', 'Agendada')
+      )
+    );
+
+    // Verificar solapamiento de horarios
+    for (const doc of conflictingAppointments.docs) {
+      const appointment = doc.data();
+      if (isTimeOverlap(slotData.startTime, slotData.endTime, appointment.startTime, appointment.endTime)) {
+        return { 
+          success: false, 
+          error: 'Ya tienes una cita agendada en este horario con otro doctor' 
+        };
+      }
     }
 
     // Obtener info del doctor

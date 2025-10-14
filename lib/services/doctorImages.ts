@@ -122,3 +122,4 @@ export function optimizeDoctorImageUrl(
   }
   return `${baseUrl}?w=${width}&h=${height}&fit=crop&crop=face`;
 }
+
