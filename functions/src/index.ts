@@ -206,7 +206,21 @@ export const bookSlot = functions.region(region).https.onCall(
       }
 
       // VALIDACIONES DE RESTRICCIONES DE CITAS
-      // 1. Verificar si ya tiene cita con este doctor
+      // 1. NUEVA RESTRICCIÓN: Verificar si ya tiene cita el mismo día
+      const sameDayAppointments = await db.collection('appointments')
+        .where('patientId', '==', patientId)
+        .where('date', '==', slotData.date)
+        .where('status', '==', 'Agendada')
+        .get();
+
+      if (!sameDayAppointments.empty) {
+        return { 
+          success: false, 
+          error: 'Ya tienes una cita agendada para este día' 
+        };
+      }
+
+      // 2. Verificar si ya tiene cita con este doctor
       const existingDoctorAppointments = await db.collection('appointments')
         .where('patientId', '==', patientId)
         .where('doctorId', '==', slotData.doctorId)
@@ -220,7 +234,7 @@ export const bookSlot = functions.region(region).https.onCall(
         };
       }
 
-      // 2. Verificar si tiene conflicto de horario con otra cita
+      // 3. Verificar si tiene conflicto de horario con otra cita
       const conflictingAppointments = await db.collection('appointments')
         .where('patientId', '==', patientId)
         .where('date', '==', slotData.date)

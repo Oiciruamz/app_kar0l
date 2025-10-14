@@ -160,7 +160,24 @@ export async function bookSlot(request: BookSlotRequest): Promise<BookSlotRespon
     }
 
     // VALIDACIONES DE RESTRICCIONES DE CITAS
-    // 1. Verificar si ya tiene cita con este doctor
+    // 1. NUEVA RESTRICCIÓN: Verificar si ya tiene cita el mismo día
+    const sameDayAppointments = await getDocs(
+      query(
+        collection(db, 'appointments'),
+        where('patientId', '==', patientId),
+        where('date', '==', slotData.date),
+        where('status', '==', 'Agendada')
+      )
+    );
+
+    if (!sameDayAppointments.empty) {
+      return { 
+        success: false, 
+        error: 'Ya tienes una cita agendada para este día' 
+      };
+    }
+
+    // 2. Verificar si ya tiene cita con este doctor
     const existingDoctorAppointments = await getDocs(
       query(
         collection(db, 'appointments'),
@@ -177,7 +194,7 @@ export async function bookSlot(request: BookSlotRequest): Promise<BookSlotRespon
       };
     }
 
-    // 2. Verificar si tiene conflicto de horario con otra cita
+    // 3. Verificar si tiene conflicto de horario con otra cita
     const conflictingAppointments = await getDocs(
       query(
         collection(db, 'appointments'),

@@ -137,7 +137,9 @@ export default function NewBookingScreen() {
         const errorMessage = result.error || 'Error al agendar cita';
         let alertTitle = 'Error';
         
-        if (errorMessage.includes('Ya tienes una cita agendada con este doctor')) {
+        if (errorMessage.includes('Ya tienes una cita agendada para este día')) {
+          alertTitle = 'Cita del Mismo Día';
+        } else if (errorMessage.includes('Ya tienes una cita agendada con este doctor')) {
           alertTitle = 'Cita Duplicada';
         } else if (errorMessage.includes('Ya tienes una cita agendada en este horario')) {
           alertTitle = 'Conflicto de Horario';

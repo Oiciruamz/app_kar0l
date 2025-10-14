@@ -78,6 +78,36 @@ export async function checkConflictingAppointment(
 }
 
 /**
+ * Verificar si un usuario ya tiene una cita el mismo día
+ */
+export async function checkSameDayAppointment(
+  patientId: string, 
+  date: string
+): Promise<{ hasSameDayAppointment: boolean; appointment?: Appointment }> {
+  try {
+    const q = query(
+      collection(db, 'appointments'),
+      where('patientId', '==', patientId),
+      where('date', '==', date),
+      where('status', '==', 'Agendada')
+    );
+    
+    const snapshot = await getDocs(q);
+    
+    if (snapshot.empty) {
+      return { hasSameDayAppointment: false };
+    }
+    
+    // Si encuentra cualquier cita el mismo día, retorna true
+    const appointment = { id: snapshot.docs[0].id, ...snapshot.docs[0].data() } as Appointment;
+    return { hasSameDayAppointment: true, appointment };
+  } catch (error) {
+    console.error('Error checking same day appointment:', error);
+    throw new Error('Error al verificar citas del mismo día');
+  }
+}
+
+/**
  * Verificar si dos rangos de tiempo se solapan
  */
 function isTimeOverlap(
@@ -112,6 +142,16 @@ export async function validateAppointmentBooking(
   endTime: string
 ): Promise<{ isValid: boolean; error?: string; conflictingAppointment?: Appointment }> {
   try {
+    // NUEVA RESTRICCIÓN: Verificar si ya tiene cita el mismo día
+    const sameDayCheck = await checkSameDayAppointment(patientId, date);
+    if (sameDayCheck.hasSameDayAppointment) {
+      return {
+        isValid: false,
+        error: 'Ya tienes una cita agendada para este día',
+        conflictingAppointment: sameDayCheck.appointment
+      };
+    }
+    
     // Verificar si ya tiene cita con este doctor
     const doctorCheck = await checkExistingAppointmentWithDoctor(patientId, doctorId);
     if (doctorCheck.hasAppointment) {

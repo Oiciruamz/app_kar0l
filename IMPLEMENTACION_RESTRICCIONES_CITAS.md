@@ -3,14 +3,17 @@
 ## Problema Solucionado
 - **Antes**: Los usuarios podían agendar múltiples citas con el mismo doctor
 - **Antes**: Los usuarios podían agendar citas con diferentes doctores en el mismo horario
+- **Antes**: Los usuarios podían agendar múltiples citas el mismo día
 - **Ahora**: Un usuario solo puede tener UNA cita activa con cada doctor específico
 - **Ahora**: Un usuario no puede tener citas con diferentes doctores en horarios solapados
+- **Ahora**: Un usuario NO puede agendar NINGUNA cita el mismo día si ya tiene una cita previa
 
 ## Archivos Modificados
 
 ### 1. `lib/api/validation.ts` (NUEVO)
 - **Función**: `checkExistingAppointmentWithDoctor()` - Verifica si ya tiene cita con un doctor
 - **Función**: `checkConflictingAppointment()` - Verifica conflictos de horario
+- **Función**: `checkSameDayAppointment()` - Verifica si ya tiene cita el mismo día (NUEVA)
 - **Función**: `isTimeOverlap()` - Detecta solapamiento de horarios
 - **Función**: `validateAppointmentBooking()` - Validación completa
 
@@ -18,6 +21,7 @@
 - **Agregado**: Validaciones antes de crear citas en `bookSlot()`
 - **Agregado**: Función `isTimeOverlap()` para detectar solapamientos
 - **Validaciones**:
+  - Verificar si ya tiene cita el mismo día (NUEVA RESTRICCIÓN)
   - Verificar si ya tiene cita con el mismo doctor
   - Verificar si tiene conflicto de horario con otra cita
 
@@ -26,12 +30,14 @@
 - **Agregado**: Función `isTimeOverlap()` local
 - **Modificado**: `bookSlot()` con las mismas validaciones del backend
 - **Validaciones**:
+  - Verificar si ya tiene cita el mismo día (NUEVA RESTRICCIÓN)
   - Verificar si ya tiene cita con el mismo doctor
   - Verificar si tiene conflicto de horario con otra cita
 
 ### 4. `app/(patient)/new-booking.tsx` (MODIFICADO)
 - **Mejorado**: Mensajes de error más específicos
 - **Títulos de alerta**:
+  - "Cita del Mismo Día" para citas el mismo día (NUEVO)
   - "Cita Duplicada" para citas con el mismo doctor
   - "Conflicto de Horario" para horarios solapados
   - "Reserva Expirada" para holds expirados
@@ -46,6 +52,19 @@
 - **Pruebas de validación** de citas (requiere Firebase configurado)
 
 ## Lógica de Validación
+
+### Restricción por Día (NUEVA)
+```typescript
+// Buscar citas activas el mismo día
+const sameDayAppointments = await getDocs(
+  query(
+    collection(db, 'appointments'),
+    where('patientId', '==', patientId),
+    where('date', '==', date),
+    where('status', '==', 'Agendada')
+  )
+);
+```
 
 ### Restricción por Doctor
 ```typescript
@@ -107,13 +126,16 @@ function isTimeOverlap(start1: string, end1: string, start2: string, end2: strin
 
 ## Mensajes de Error
 
-1. **"Ya tienes una cita agendada con este doctor"**
+1. **"Ya tienes una cita agendada para este día"** (NUEVO)
+   - Cuando intenta agendar cualquier cita el mismo día
+
+2. **"Ya tienes una cita agendada con este doctor"**
    - Cuando intenta agendar segunda cita con el mismo doctor
 
-2. **"Ya tienes una cita agendada en este horario con otro doctor"**
+3. **"Ya tienes una cita agendada en este horario con otro doctor"**
    - Cuando intenta agendar cita en horario solapado con otra cita
 
-3. **"La reserva expiró. Selecciona otro horario."**
+4. **"La reserva expiró. Selecciona otro horario."**
    - Cuando el hold temporal expira (2 minutos)
 
 ## Pruebas
@@ -127,15 +149,16 @@ Para probar la implementación:
 
 2. **Escenarios de prueba manual**:
    - Agendar primera cita con doctor A ✅
-   - Intentar agendar segunda cita con doctor A ❌
-   - Agendar cita con doctor B en horario diferente ✅
-   - Intentar agendar cita con doctor B en horario solapado ❌
+   - Intentar agendar segunda cita el mismo día con doctor B ❌ (NUEVA RESTRICCIÓN)
+   - Agendar cita con doctor B en día diferente ✅
+   - Intentar agendar segunda cita con doctor A en día diferente ❌
    - Cancelar cita y agendar nueva con el mismo doctor ✅
 
 ## Beneficios
 
 1. **Prevención de doble agendamiento** con el mismo doctor
 2. **Prevención de conflictos de horario** entre diferentes doctores
-3. **Mejor experiencia de usuario** con mensajes de error claros
-4. **Consistencia** entre cliente y servidor
-5. **Mantenimiento de integridad** de datos en la base de datos
+3. **Prevención de múltiples citas el mismo día** (NUEVA FUNCIONALIDAD)
+4. **Mejor experiencia de usuario** con mensajes de error claros
+5. **Consistencia** entre cliente y servidor
+6. **Mantenimiento de integridad** de datos en la base de datos

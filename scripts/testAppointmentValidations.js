@@ -25,37 +25,37 @@ async function testAppointmentValidations() {
       expectedValid: true
     },
     {
-      name: 'Segunda cita con el mismo doctor (debería fallar)',
-      doctorId: testDoctor1,
+      name: 'Segunda cita el mismo día con doctor diferente (NUEVA RESTRICCIÓN - debería fallar)',
+      doctorId: testDoctor2,
       date: testDate,
       startTime: '10:00',
       endTime: '10:30',
       expectedValid: false,
-      expectedError: 'Ya tienes una cita agendada con este doctor'
+      expectedError: 'Ya tienes una cita agendada para este día'
     },
     {
-      name: 'Cita con doctor diferente en horario diferente',
+      name: 'Cita con doctor diferente en día diferente',
       doctorId: testDoctor2,
-      date: testDate,
+      date: '2024-01-16',
       startTime: '11:00',
       endTime: '11:30',
       expectedValid: true
     },
     {
-      name: 'Cita con doctor diferente en horario solapado (debería fallar)',
-      doctorId: testDoctor2,
-      date: testDate,
-      startTime: '09:15',
-      endTime: '09:45',
-      expectedValid: false,
-      expectedError: 'Ya tienes una cita agendada en este horario con otro doctor'
-    },
-    {
-      name: 'Cita con doctor diferente en horario no solapado',
-      doctorId: testDoctor2,
-      date: testDate,
+      name: 'Segunda cita con el mismo doctor en día diferente (debería fallar)',
+      doctorId: testDoctor1,
+      date: '2024-01-16',
       startTime: '14:00',
       endTime: '14:30',
+      expectedValid: false,
+      expectedError: 'Ya tienes una cita agendada con este doctor'
+    },
+    {
+      name: 'Cita con doctor diferente en día diferente',
+      doctorId: testDoctor2,
+      date: '2024-01-17',
+      startTime: '15:00',
+      endTime: '15:30',
       expectedValid: true
     }
   ];
