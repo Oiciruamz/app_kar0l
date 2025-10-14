@@ -103,3 +103,12 @@ export interface CancelAppointmentResponse {
   error?: string;
 }
 
+export interface DoctorNote {
+  id: string;
+  doctorId: string;
+  title: string;
+  content: string;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+

@@ -119,6 +119,28 @@ service cloud.firestore {
       allow delete: if isAuthenticated() && 
                       resource.data.patientId == request.auth.uid;
     }
+
+    // Doctor Notes collection
+    match /doctorNotes/{noteId} {
+      // Doctors can read their own notes
+      allow read: if isAuthenticated() && 
+                    resource.data.doctorId == request.auth.uid;
+      
+      // Doctors can create notes for themselves
+      allow create: if isAuthenticated() && 
+                      isDoctor() && 
+                      request.resource.data.doctorId == request.auth.uid;
+      
+      // Doctors can update their own notes
+      allow update: if isAuthenticated() && 
+                      isDoctor() && 
+                      resource.data.doctorId == request.auth.uid;
+      
+      // Doctors can delete their own notes
+      allow delete: if isAuthenticated() && 
+                      isDoctor() && 
+                      resource.data.doctorId == request.auth.uid;
+    }
   }
 }
 

@@ -33,7 +33,7 @@ export default function DoctorLayout() {
             onPress={() => router.push('/(doctor)/(tabs)/agenda')}
           />
           <TabIcon 
-            name="time" 
+            name="notes" 
             size={24} 
             color={isInTabs && segments[segments.length - 1] === 'availability' ? '#73506E' : '#6B7280'} 
             onPress={() => router.push('/(doctor)/(tabs)/availability')}

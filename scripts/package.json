@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "description": "Scripts para poblar la base de datos de la aplicación",
   "scripts": {
-    "seed": "node seedDatabase.js"
+    "seed": "node seedDatabase.js",
+    "setup-notes": "node setupDoctorNotes.js"
   },
   "dependencies": {
     "firebase-admin": "^12.0.0",
