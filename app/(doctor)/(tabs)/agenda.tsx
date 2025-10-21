@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, RefreshControl } from 'react-native';
+import { useRouter } from 'expo-router';
 import { AppBar } from '@/components/AppBar';
 import { AppointmentItem } from '@/components/AppointmentItem';
 import { useAuth } from '@/lib/hooks/useAuth';
@@ -8,6 +9,7 @@ import { Appointment } from '@/lib/types';
 
 export default function AgendaScreen() {
   const { user } = useAuth();
+  const router = useRouter();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -35,6 +37,13 @@ export default function AgendaScreen() {
     loadAppointments();
   };
 
+  const handleAppointmentPress = (appointment: Appointment) => {
+    router.push({
+      pathname: '/(doctor)/appointment-detail',
+      params: { appointmentId: appointment.id }
+    });
+  };
+
   // Filtrar citas agendadas y ordenarlas por fecha y hora
   const upcomingAppointments = appointments
     .filter(apt => apt.status === 'Agendada')
@@ -60,7 +69,11 @@ export default function AgendaScreen() {
         data={upcomingAppointments}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <AppointmentItem appointment={item} showPatientName />
+          <AppointmentItem 
+            appointment={item} 
+            showPatientName 
+            onPress={() => handleAppointmentPress(item)}
+          />
         )}
         contentContainerStyle={styles.list}
         ListEmptyComponent={

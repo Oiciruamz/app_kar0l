@@ -56,6 +56,9 @@ export interface Appointment {
   endTime: string;
   reason?: string;
   status: AppointmentStatus;
+  bookedBy?: string; // ID del usuario que agendó la cita
+  bookedByRole?: 'doctor' | 'patient'; // Rol del usuario que agendó
+  notes?: string; // Notas adicionales del médico
   createdAt: Timestamp;
   updatedAt: Timestamp;
   cancelledAt?: Timestamp;
@@ -110,5 +113,33 @@ export interface DoctorNote {
   content: string;
   createdAt: Timestamp;
   updatedAt: Timestamp;
+}
+
+export interface AppointmentNote {
+  id: string;
+  appointmentId: string;
+  doctorId: string;
+  patientId: string;
+  diagnosis?: string;
+  treatment?: string;
+  observations?: string;
+  referralTo?: string; // ID del doctor especialista
+  referralReason?: string; // Motivo de derivación
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+export interface BookSlotAsDoctorRequest {
+  patientId: string;
+  doctorId: string; // Puede ser el mismo o diferente
+  slotId: string;
+  reason: string;
+  notes?: string;
+}
+
+export interface BookSlotAsDoctorResponse {
+  success: boolean;
+  appointmentId?: string;
+  error?: string;
 }
 

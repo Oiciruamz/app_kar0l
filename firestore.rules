@@ -51,9 +51,10 @@ service cloud.firestore {
                       request.resource.data.capacity == 1;
       
       // Doctors can update their own slots, patients can hold/book slots
+      // Doctors can also book slots for patients (referral/follow-up)
       allow update: if isAuthenticated() && (
-                      // Doctor updating their own slot
-                      (isDoctor() && resource.data.doctorId == request.auth.uid) ||
+                      // Doctor updating any slot (for booking appointments)
+                      isDoctor() ||
                       // Patient holding a slot
                       (isPatient() && resource.data.status == 'available' && 
                        request.resource.data.status == 'on_hold' && 
@@ -81,16 +82,18 @@ service cloud.firestore {
 
     // Appointments collection
     match /appointments/{appointmentId} {
-      // Doctors can read their appointments
-      // Patients can read their appointments
+      // Doctors can read all appointments (to validate patient availability)
+      // Patients can only read their own appointments
       allow read: if isAuthenticated() && 
-                    (resource.data.doctorId == request.auth.uid || 
+                    (isDoctor() ||
                      resource.data.patientId == request.auth.uid);
       
       // Patients can create their own appointments
-      allow create: if isAuthenticated() && 
-                      isPatient() && 
-                      request.resource.data.patientId == request.auth.uid;
+      // Doctors can create appointments for patients (referral/follow-up)
+      allow create: if isAuthenticated() && (
+                      (isPatient() && request.resource.data.patientId == request.auth.uid) ||
+                      isDoctor()
+                    );
       
       // Users can update/cancel their own appointments
       allow update: if isAuthenticated() && 
@@ -137,6 +140,27 @@ service cloud.firestore {
                       resource.data.doctorId == request.auth.uid;
       
       // Doctors can delete their own notes
+      allow delete: if isAuthenticated() && 
+                      isDoctor() && 
+                      resource.data.doctorId == request.auth.uid;
+    }
+
+    // Appointment Notes collection (medical notes for specific appointments)
+    match /appointmentNotes/{noteId} {
+      // Allow read for authenticated users - security handled at application level
+      allow read: if isAuthenticated();
+      
+      // Doctors can create notes for appointments they're involved in
+      allow create: if isAuthenticated() && 
+                      isDoctor() && 
+                      request.resource.data.doctorId == request.auth.uid;
+      
+      // Doctors can update notes they created
+      allow update: if isAuthenticated() && 
+                      isDoctor() && 
+                      resource.data.doctorId == request.auth.uid;
+      
+      // Doctors can delete notes they created
       allow delete: if isAuthenticated() && 
                       isDoctor() && 
                       resource.data.doctorId == request.auth.uid;

@@ -59,6 +59,20 @@ interface CancelAppointmentResponse {
   error?: string;
 }
 
+interface BookSlotAsDoctorRequest {
+  patientId: string;
+  doctorId: string; // Puede ser el mismo o diferente
+  slotId: string;
+  reason: string;
+  notes?: string;
+}
+
+interface BookSlotAsDoctorResponse {
+  success: boolean;
+  appointmentId?: string;
+  error?: string;
+}
+
 // Hold a slot for 2 minutes
 export const holdSlot = functions.region(region).https.onCall(
   async (data: HoldSlotRequest, context): Promise<HoldSlotResponse> => {
@@ -426,4 +440,162 @@ export const onHoldDeleted = functions.region(region).firestore
       console.error('Error releasing slot on hold delete:', error);
     }
   });
+
+// Book a slot as a doctor (for patient referral or follow-up)
+export const bookSlotAsDoctor = functions.region(region).https.onCall(
+  async (data: BookSlotAsDoctorRequest, context): Promise<BookSlotAsDoctorResponse> => {
+    // Authentication check
+    if (!context.auth) {
+      return { success: false, error: 'No autorizado' };
+    }
+
+    const { patientId, doctorId, slotId, reason, notes } = data;
+    const doctorUserId = context.auth.uid;
+
+    try {
+      // Verificar que el usuario es un doctor
+      const userDoc = await db.collection('users').doc(doctorUserId).get();
+      const userData = userDoc.data();
+      
+      if (!userData || userData.role !== 'doctor') {
+        return { success: false, error: 'Solo los doctores pueden agendar citas para pacientes' };
+      }
+
+      // Verificar que el slot existe y está disponible
+      const slotRef = db.collection('slots').doc(slotId);
+      const slotDoc = await slotRef.get();
+      
+      if (!slotDoc.exists) {
+        return { success: false, error: 'Horario no encontrado' };
+      }
+
+      const slotData = slotDoc.data();
+      if (!slotData) {
+        return { success: false, error: 'Datos de horario inválidos' };
+      }
+
+      // Verificar que el slot está disponible
+      if (slotData.status !== 'available') {
+        return { success: false, error: 'El horario ya no está disponible' };
+      }
+
+      // Verificar que el slot pertenece al doctor seleccionado
+      if (slotData.doctorId !== doctorId) {
+        return { success: false, error: 'El horario no pertenece al doctor seleccionado' };
+      }
+
+      // VALIDACIONES DE RESTRICCIONES DE CITAS (mismas que para pacientes)
+      // 1. Verificar si ya tiene cita el mismo día
+      const sameDayAppointments = await db.collection('appointments')
+        .where('patientId', '==', patientId)
+        .where('date', '==', slotData.date)
+        .where('status', '==', 'Agendada')
+        .get();
+
+      if (!sameDayAppointments.empty) {
+        return { 
+          success: false, 
+          error: 'El paciente ya tiene una cita agendada para este día' 
+        };
+      }
+
+      // 2. Verificar si ya tiene cita con este doctor
+      const existingDoctorAppointments = await db.collection('appointments')
+        .where('patientId', '==', patientId)
+        .where('doctorId', '==', slotData.doctorId)
+        .where('status', '==', 'Agendada')
+        .get();
+
+      if (!existingDoctorAppointments.empty) {
+        return { 
+          success: false, 
+          error: 'El paciente ya tiene una cita agendada con este doctor' 
+        };
+      }
+
+      // 3. Verificar si tiene conflicto de horario con otra cita
+      const conflictingAppointments = await db.collection('appointments')
+        .where('patientId', '==', patientId)
+        .where('date', '==', slotData.date)
+        .where('status', '==', 'Agendada')
+        .get();
+
+      // Verificar solapamiento de horarios
+      for (const doc of conflictingAppointments.docs) {
+        const appointment = doc.data();
+        if (isTimeOverlap(slotData.startTime, slotData.endTime, appointment.startTime, appointment.endTime)) {
+          return { 
+            success: false, 
+            error: 'El paciente ya tiene una cita agendada en este horario con otro doctor' 
+          };
+        }
+      }
+
+      // Obtener información del paciente
+      const patientDoc = await db.collection('users').doc(patientId).get();
+      const patientData = patientDoc.data();
+      
+      if (!patientData || patientData.role !== 'patient') {
+        return { success: false, error: 'Paciente no encontrado' };
+      }
+
+      // Obtener información del doctor seleccionado
+      const selectedDoctorDoc = await db.collection('users').doc(doctorId).get();
+      const selectedDoctorData = selectedDoctorDoc.data();
+
+      if (!selectedDoctorData || selectedDoctorData.role !== 'doctor') {
+        return { success: false, error: 'Doctor no encontrado' };
+      }
+
+      // Crear la cita en una transacción
+      const appointmentId = await db.runTransaction(async (transaction) => {
+        const appointmentRef = db.collection('appointments').doc();
+        const now = admin.firestore.Timestamp.now();
+
+        const appointmentData = {
+          id: appointmentRef.id,
+          doctorId: slotData.doctorId,
+          patientId,
+          slotId,
+          doctorName: selectedDoctorData.displayName || 'Doctor',
+          patientName: patientData.displayName || 'Paciente',
+          patientPhone: patientData.phone || '',
+          date: slotData.date,
+          startTime: slotData.startTime,
+          endTime: slotData.endTime,
+          reason: reason || null,
+          status: 'Agendada',
+          bookedBy: doctorUserId, // Registrar quién agendó la cita
+          bookedByRole: 'doctor',
+          notes: notes || null,
+          createdAt: now,
+          updatedAt: now
+        };
+
+        // Actualizar el slot para marcarlo como ocupado
+        transaction.update(slotRef, {
+          status: 'booked',
+          appointmentId: appointmentRef.id,
+          updatedAt: now
+        });
+
+        // Crear la cita
+        transaction.set(appointmentRef, appointmentData);
+
+        return appointmentRef.id;
+      });
+
+      return {
+        success: true,
+        appointmentId
+      };
+    } catch (error: any) {
+      console.error('Error booking slot as doctor:', error);
+      return {
+        success: false,
+        error: error.message || 'Error al agendar cita'
+      };
+    }
+  }
+);
 

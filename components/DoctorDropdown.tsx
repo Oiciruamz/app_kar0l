@@ -15,13 +15,17 @@ interface DoctorDropdownProps {
   selectedDoctor: Doctor | null;
   onSelectDoctor: (doctor: Doctor) => void;
   placeholder?: string;
+  currentDoctorId?: string;
+  selectedDate?: Date;
 }
 
 export function DoctorDropdown({ 
   doctors, 
   selectedDoctor, 
   onSelectDoctor, 
-  placeholder = "Seleccionar dentista" 
+  placeholder = "Seleccionar dentista",
+  currentDoctorId,
+  selectedDate
 }: DoctorDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -29,6 +33,13 @@ export function DoctorDropdown({
     onSelectDoctor(doctor);
     setIsOpen(false);
   };
+
+  // Verificar si el doctor seleccionado es el doctor actual
+  const isCurrentDoctor = selectedDoctor?.uid === currentDoctorId;
+  const isToday = selectedDate && 
+    selectedDate.toDateString() === new Date().toDateString();
+  
+  const isDisabled = isCurrentDoctor && isToday;
 
   return (
     <View style={styles.container}>
@@ -39,9 +50,14 @@ export function DoctorDropdown({
       >
         <Text style={[
           styles.dropdownText, 
-          !selectedDoctor && styles.placeholderText
+          !selectedDoctor && styles.placeholderText,
+          isDisabled && styles.disabledText
         ]}>
-          {selectedDoctor ? selectedDoctor.displayName : placeholder}
+          {selectedDoctor ? (
+            isDisabled ? 
+              `${selectedDoctor.displayName} (No disponible hoy)` : 
+              selectedDoctor.displayName
+          ) : placeholder}
         </Text>
         <Text style={styles.arrow}>▼</Text>
       </TouchableOpacity>
@@ -122,6 +138,10 @@ const styles = StyleSheet.create({
   },
   placeholderText: {
     color: '#9CA3AF',
+  },
+  disabledText: {
+    color: '#EF4444',
+    fontStyle: 'italic',
   },
   arrow: {
     fontSize: scaleFont(12),

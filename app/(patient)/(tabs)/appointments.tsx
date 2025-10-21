@@ -28,13 +28,27 @@ export default function AppointmentsScreen() {
   const [refreshing, setRefreshing] = useState(false);
 
   const loadAppointments = async () => {
-    if (!user) return;
+    if (!user) {
+      console.log('❌ AppointmentsScreen - No hay usuario autenticado');
+      return;
+    }
+    
+    console.log('🔍 AppointmentsScreen - Cargando citas para usuario:', user.uid);
     
     try {
       const data = await getAppointmentsByPatient(user.uid);
+      console.log('🔍 AppointmentsScreen - Citas recibidas:', data.length);
+      console.log('🔍 AppointmentsScreen - Primera cita:', data[0] ? {
+        id: data[0].id,
+        date: data[0].date,
+        startTime: data[0].startTime,
+        doctorName: data[0].doctorName,
+        status: data[0].status
+      } : 'No hay citas');
+      
       setAppointments(data);
     } catch (error) {
-      console.error('Error loading appointments:', error);
+      console.error('❌ AppointmentsScreen - Error loading appointments:', error);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -105,6 +119,12 @@ export default function AppointmentsScreen() {
       )}
     </View>
   );
+
+  // Log del estado del componente
+  console.log('🔍 AppointmentsScreen - Render. Estado actual:');
+  console.log('   - loading:', loading);
+  console.log('   - appointments.length:', appointments.length);
+  console.log('   - user:', user ? user.uid : 'No hay usuario');
 
   return (
     <SafeAreaView style={styles.container}>

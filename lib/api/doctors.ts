@@ -28,3 +28,44 @@ export async function getDoctorById(doctorId: string): Promise<Doctor | null> {
   }
 }
 
+export async function getDoctorsBySpecialty(specialty?: string): Promise<Doctor[]> {
+  try {
+    let q;
+    if (specialty) {
+      q = query(
+        collection(db, 'users'), 
+        where('role', '==', 'doctor'),
+        where('specialty', '==', specialty)
+      );
+    } else {
+      q = query(collection(db, 'users'), where('role', '==', 'doctor'));
+    }
+    
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Doctor));
+  } catch (error) {
+    console.error('Error fetching doctors by specialty:', error);
+    throw new Error('Error al cargar doctores por especialidad');
+  }
+}
+
+export async function getSpecialties(): Promise<string[]> {
+  try {
+    const q = query(collection(db, 'users'), where('role', '==', 'doctor'));
+    const snapshot = await getDocs(q);
+    
+    const specialties = new Set<string>();
+    snapshot.docs.forEach(doc => {
+      const data = doc.data();
+      if (data.specialty) {
+        specialties.add(data.specialty);
+      }
+    });
+    
+    return Array.from(specialties).sort();
+  } catch (error) {
+    console.error('Error fetching specialties:', error);
+    throw new Error('Error al cargar especialidades');
+  }
+}
+

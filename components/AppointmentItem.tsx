@@ -38,7 +38,7 @@ export function AppointmentItem({
       <Card style={styles.container}>
         <View style={styles.header}>
           {showDoctorName && (
-            <Text style={styles.name}>Dr. {appointment.doctorName}</Text>
+            <Text style={styles.name}>{appointment.doctorName}</Text>
           )}
           {showPatientName && (
             <Text style={styles.name}>{appointment.patientName}</Text>

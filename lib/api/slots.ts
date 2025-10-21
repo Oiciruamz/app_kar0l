@@ -100,3 +100,27 @@ export function subscribeToSlots(
   });
 }
 
+export async function getAvailableSlots(
+  doctorId: string,
+  startDate: string,
+  endDate: string
+): Promise<TimeSlot[]> {
+  try {
+    const q = query(
+      collection(db, 'slots'),
+      where('doctorId', '==', doctorId),
+      where('date', '>=', startDate),
+      where('date', '<=', endDate),
+      where('status', '==', 'available'),
+      orderBy('date', 'asc'),
+      orderBy('startTime', 'asc')
+    );
+    
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as TimeSlot));
+  } catch (error) {
+    console.error('Error fetching available slots:', error);
+    throw new Error('Error al cargar horarios disponibles');
+  }
+}
+

@@ -18,6 +18,7 @@ export default function DoctorLayout() {
     <View style={styles.container}>
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="appointment-detail" />
       </Stack>
       
       {/* Barra de navegación siempre visible */}
