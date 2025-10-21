@@ -280,6 +280,17 @@ export default function AppointmentDetailScreen() {
     );
   }
 
+  if (!user) {
+    return (
+      <View style={styles.container}>
+        <AppBar title="Detalle de Cita" />
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>Cerrando sesión...</Text>
+        </View>
+      </View>
+    );
+  }
+
   if (!appointment) {
     return (
       <View style={styles.container}>
