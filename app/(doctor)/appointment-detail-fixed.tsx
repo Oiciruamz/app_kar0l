@@ -53,7 +53,6 @@ export default function AppointmentDetailScreen() {
   const [diagnosis, setDiagnosis] = useState('');
   const [treatment, setTreatment] = useState('');
   const [observations, setObservations] = useState('');
-  const [referralTo, setReferralTo] = useState('');
   const [referralReason, setReferralReason] = useState('');
   
   // Modal para agendar nueva cita
@@ -113,7 +112,6 @@ export default function AppointmentDetailScreen() {
           setDiagnosis(latestNote.diagnosis || '');
           setTreatment(latestNote.treatment || '');
           setObservations(latestNote.observations || '');
-          setReferralTo(latestNote.referralTo || '');
           setReferralReason(latestNote.referralReason || '');
         }
       } catch (notesError) {
@@ -142,7 +140,6 @@ export default function AppointmentDetailScreen() {
           diagnosis,
           treatment,
           observations,
-          referralTo,
           referralReason
         });
       } else {
@@ -154,7 +151,6 @@ export default function AppointmentDetailScreen() {
           diagnosis,
           treatment,
           observations,
-          referralTo,
           referralReason
         });
       }
@@ -350,13 +346,6 @@ export default function AppointmentDetailScreen() {
             onChangeText={setObservations}
             multiline
             numberOfLines={3}
-          />
-
-          <TextInput
-            label="Derivar a Doctor (ID)"
-            placeholder="ID del doctor especialista"
-            value={referralTo}
-            onChangeText={setReferralTo}
           />
 
           <TextInput

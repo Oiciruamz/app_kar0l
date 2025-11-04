@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   View, 
   Text, 
@@ -14,10 +14,11 @@ import { Button } from '@/components/ui/Button';
 import { getDoctorById } from '@/lib/api/doctors';
 import { Doctor } from '@/lib/types';
 
-interface DoctorSchedule {
+interface DoctorDailySchedule {
   day: string;
   startTime: string;
   endTime: string;
+  enabled?: boolean;
 }
 
 export default function DoctorProfileScreen() {
@@ -25,13 +26,16 @@ export default function DoctorProfileScreen() {
   const { doctorId } = useLocalSearchParams();
   const [doctor, setDoctor] = useState<Doctor | null>(null);
   const [loading, setLoading] = useState(true);
+  const weekDays = useMemo(() => ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'], []);
+  const [scheduleDays, setScheduleDays] = useState<DoctorDailySchedule[]>([]);
 
-  // Horarios de ejemplo basados en la imagen
-  const defaultSchedule: DoctorSchedule[] = [
-    { day: 'Lunes', startTime: '11:00 am', endTime: '6:30 pm' },
-    { day: 'Martes', startTime: '11:00 am', endTime: '6:30 pm' },
-    { day: 'Miércoles', startTime: '11:00 am', endTime: '3:30 pm' },
-    { day: 'Jueves', startTime: '10:30 am', endTime: '7:00 pm' },
+  // Horario por defecto si el doctor no configuró su horario
+  const defaultSchedule: DoctorDailySchedule[] = [
+    { day: 'Lunes', startTime: '11:00', endTime: '18:30', enabled: true },
+    { day: 'Martes', startTime: '11:00', endTime: '18:30', enabled: true },
+    { day: 'Miércoles', startTime: '11:00', endTime: '15:30', enabled: true },
+    { day: 'Jueves', startTime: '10:30', endTime: '19:00', enabled: true },
+    { day: 'Viernes', startTime: '09:30', endTime: '16:00', enabled: true },
   ];
 
   useEffect(() => {
@@ -46,6 +50,20 @@ export default function DoctorProfileScreen() {
         const doctorData = await getDoctorById(doctorId);
         if (doctorData) {
           setDoctor(doctorData);
+          const schedule = (doctorData as any).schedule?.days as DoctorDailySchedule[] | undefined;
+          if (schedule && Array.isArray(schedule) && schedule.length > 0) {
+            const merged = weekDays.map((dayName) => {
+              const found = schedule.find((d) => d.day === dayName);
+              return found || { day: dayName, startTime: '09:00', endTime: '18:00', enabled: false };
+            });
+            setScheduleDays(merged);
+          } else {
+            const merged = weekDays.map((dayName) => {
+              const found = defaultSchedule.find((d) => d.day === dayName);
+              return found || { day: dayName, startTime: '09:00', endTime: '18:00', enabled: false };
+            });
+            setScheduleDays(merged);
+          }
         } else {
           Alert.alert('Error', 'Doctor no encontrado');
           router.back();
@@ -122,14 +140,18 @@ export default function DoctorProfileScreen() {
         {/* Horario */}
         <View style={styles.scheduleContainer}>
           <Text style={styles.scheduleTitle}>Horario</Text>
-          {defaultSchedule.map((schedule, index) => (
-            <View key={index} style={styles.scheduleItem}>
-              <Text style={styles.scheduleDay}>{schedule.day}:</Text>
-              <Text style={styles.scheduleTime}>
-                {schedule.startTime} - {schedule.endTime}
-              </Text>
-            </View>
-          ))}
+          {scheduleDays.filter(d => d.enabled !== false).length === 0 ? (
+            <Text style={styles.scheduleTime}>Este doctor no tiene horario configurado.</Text>
+          ) : (
+            scheduleDays.filter(d => d.enabled !== false).map((schedule, index) => (
+              <View key={index} style={styles.scheduleItem}>
+                <Text style={styles.scheduleDay}>{schedule.day}:</Text>
+                <Text style={styles.scheduleTime}>
+                  {schedule.startTime} - {schedule.endTime}
+                </Text>
+              </View>
+            ))
+          )}
         </View>
 
         {/* Botón de agendar cita */}

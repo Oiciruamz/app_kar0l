@@ -18,8 +18,8 @@ import { TimeSlotGrid } from '@/components/TimeSlotGridNew';
 import { TextInput } from '@/components/ui/TextInput';
 import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/lib/hooks/useAuth';
-import { getDoctors } from '@/lib/api/doctors';
-import { subscribeToSlots } from '@/lib/api/slots';
+import { getDoctors, getDoctorById } from '@/lib/api/doctors';
+import { subscribeToSlots, ensureSlotsForDate } from '@/lib/api/slots';
 import { holdSlot, bookSlot, releaseHold } from '@/lib/api/clientBooking';
 import { Doctor, TimeSlot } from '@/lib/types';
 import { format, addDays } from 'date-fns';
@@ -45,6 +45,42 @@ export default function NewBookingScreen() {
   const [holdExpiresAt, setHoldExpiresAt] = useState<number | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
+  const dedupeSlots = (input: TimeSlot[], preferredId?: string): TimeSlot[] => {
+    // Mantener un único slot por startTime priorizando estados: available > on_hold > booked
+    const priority: Record<string, number> = { available: 3, on_hold: 2, booked: 1 } as any;
+    const map = new Map<string, TimeSlot>();
+    for (const s of input) {
+      const key = s.startTime;
+      const existing = map.get(key);
+      if (!existing) {
+        map.set(key, s);
+      } else {
+        // Si uno coincide con preferredId, preferirlo
+        if (preferredId && (existing as any).id !== preferredId && (s as any).id === preferredId) {
+          map.set(key, s);
+        } else if (!(preferredId && (existing as any).id === preferredId)) {
+          const curP = priority[(existing as any).status] ?? 0;
+          const newP = priority[(s as any).status] ?? 0;
+          if (newP > curP) map.set(key, s);
+        }
+      }
+    }
+    // Ordenar por hora asc
+    return Array.from(map.values()).sort((a, b) => a.startTime.localeCompare(b.startTime));
+  };
+
+  const normalizeHolds = (input: TimeSlot[]): TimeSlot[] => {
+    const now = Date.now();
+    return input.map((s) => {
+      // Si está en on_hold pero ya expiró, tratar como disponible
+      const expires = (s as any).holdExpiresAt?.toMillis ? (s as any).holdExpiresAt.toMillis() : undefined;
+      if (s.status === 'on_hold' && expires && expires < now) {
+        return { ...s, status: 'available', holdExpiresAt: undefined, holdBy: undefined } as any;
+      }
+      return s;
+    });
+  };
+
   // Cargar doctores
   useEffect(() => {
     const loadDoctors = async () => {
@@ -60,21 +96,34 @@ export default function NewBookingScreen() {
 
   // Suscribirse a slots cuando se selecciona doctor y fecha
   useEffect(() => {
-    if (!selectedDoctor || !selectedDate) {
-      setSlots([]);
-      return;
-    }
-
-    const unsubscribe = subscribeToSlots(
-      selectedDoctor.uid, 
-      selectedDate, 
-      (data) => {
-        setSlots(data);
+    let unsubscribe: (() => void) | null = null;
+    const run = async () => {
+      if (!selectedDoctor || !selectedDate) {
+        setSlots([]);
+        if (unsubscribe) unsubscribe();
+        return;
       }
-    );
 
-    return () => unsubscribe();
-  }, [selectedDoctor, selectedDate]);
+      try {
+        // Asegurar slots para esa fecha según el horario del doctor
+        const doctor = await getDoctorById(selectedDoctor.uid);
+        const schedule = (doctor as any)?.schedule?.days;
+        if (schedule && Array.isArray(schedule)) {
+          await ensureSlotsForDate(selectedDoctor.uid, selectedDate, schedule, 30);
+        }
+      } catch {}
+
+      // Suscribirse a cambios
+      unsubscribe = subscribeToSlots(
+        selectedDoctor.uid,
+        selectedDate,
+        (data) => setSlots(dedupeSlots(normalizeHolds(data), selectedSlot?.id || undefined))
+      );
+    };
+
+    run();
+    return () => { if (unsubscribe) unsubscribe(); };
+  }, [selectedDoctor, selectedDate, selectedSlot]);
 
   const handleSelectDoctor = (doctor: Doctor) => {
     setSelectedDoctor(doctor);

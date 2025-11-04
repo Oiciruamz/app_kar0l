@@ -178,7 +178,7 @@ export default function RegisterScreen() {
             style={styles.linkContainer}
           >
             <Text style={styles.linkText}>
-              ¿Ya tienes cuenta? <Text style={styles.linkBold}>Inicia sesión</Text>
+               <Text style={styles.linkBold}>Regresar</Text>
             </Text>
           </TouchableOpacity>
         </View>

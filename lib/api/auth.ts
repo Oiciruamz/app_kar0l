@@ -15,6 +15,7 @@ export interface RegisterData {
   phone: string;
   role: UserRole;
   specialty?: string; // for doctors
+  bio?: string; // optional for doctors
 }
 
 export async function registerUser(data: RegisterData): Promise<UserProfile> {
@@ -43,8 +44,9 @@ export async function registerUser(data: RegisterData): Promise<UserProfile> {
     };
 
     // Add specialty for doctors
-    if (data.role === 'doctor' && data.specialty) {
-      (userProfile as any).specialty = data.specialty;
+    if (data.role === 'doctor') {
+      if (data.specialty) (userProfile as any).specialty = data.specialty;
+      if (data.bio) (userProfile as any).bio = data.bio;
     }
 
     await setDoc(doc(db, 'users', userCredential.user.uid), userProfile);
