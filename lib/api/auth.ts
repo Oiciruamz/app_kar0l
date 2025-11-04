@@ -60,9 +60,24 @@ export async function loginUser(email: string, password: string) {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     return userCredential.user;
   } catch (error: any) {
+    console.error('🔴 Error Firebase:', error.code, error.message);
+    
     if (error.code === 'auth/invalid-credential') {
       throw new Error('Credenciales inválidas');
     }
+    if (error.code === 'auth/quota-exceeded') {
+      throw new Error('Se excedió el límite de intentos de Firebase. Espera 15-30 minutos o actualiza tu plan en Firebase Console.');
+    }
+    if (error.code === 'auth/too-many-requests') {
+      throw new Error('Demasiados intentos fallidos. Por favor espera unos minutos e intenta de nuevo.');
+    }
+    if (error.code === 'auth/user-not-found') {
+      throw new Error('No existe una cuenta con este correo. Regístrate primero.');
+    }
+    if (error.code === 'auth/wrong-password') {
+      throw new Error('Contraseña incorrecta');
+    }
+    
     throw new Error(error.message || 'Error al iniciar sesión');
   }
 }

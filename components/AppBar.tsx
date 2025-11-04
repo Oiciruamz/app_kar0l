@@ -14,7 +14,7 @@ export function AppBar({ title, showBack = false }: AppBarProps) {
   const insets = useSafeAreaInsets();
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]} accessibilityRole="banner">
+    <View style={[styles.container, { paddingTop: insets.top }]} accessibilityRole="header">
       <View style={styles.content}>
         {showBack && (
           <TouchableOpacity 

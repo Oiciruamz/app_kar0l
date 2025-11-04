@@ -442,7 +442,7 @@ export default function AppointmentDetailScreen() {
                 selectedDoctor={selectedDoctor}
                 onSelectDoctor={handleDoctorSelect}
                 currentDoctorId={user.uid}
-                selectedDate={selectedDate}
+                selectedDate={selectedDate ?? undefined}
               />
             </View>
 

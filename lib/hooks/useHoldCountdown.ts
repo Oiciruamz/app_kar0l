@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 
 export function useHoldCountdown(expiresAt: number | null) {
   const [timeLeft, setTimeLeft] = useState<number>(0);
-  const intervalRef = useRef<NodeJS.Timeout>();
+  const intervalRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
 
   useEffect(() => {
     if (!expiresAt) {

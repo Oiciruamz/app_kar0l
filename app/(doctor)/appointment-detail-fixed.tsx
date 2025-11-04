@@ -473,6 +473,7 @@ export default function AppointmentDetailScreen() {
             {/* Motivo de la nueva cita */}
             <Text style={styles.modalSectionTitle}>📝 Motivo de la Nueva Cita</Text>
             <TextInput
+              label="Motivo de la Nueva Cita"
               placeholder="Ej: Seguimiento, derivación a especialista..."
               value={newAppointmentReason}
               onChangeText={setNewAppointmentReason}

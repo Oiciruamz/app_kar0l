@@ -41,13 +41,21 @@ export default function LoginScreen() {
   };
 
   const handleLogin = async () => {
-    if (!validate()) return;
+    console.log('🔵 Intentando login con:', email);
+    
+    if (!validate()) {
+      console.log('❌ Validación falló');
+      return;
+    }
 
+    console.log('✅ Validación exitosa, iniciando...');
     setLoading(true);
     try {
-      await loginUser(email, password);
+      const user = await loginUser(email, password);
+      console.log('✅ Login exitoso:', user?.uid);
       // Navigation handled by root layout
     } catch (error: any) {
+      console.log('❌ Error en login:', error);
       Alert.alert('Error', error.message);
     } finally {
       setLoading(false);
@@ -89,14 +97,29 @@ export default function LoginScreen() {
           <Button 
             onPress={handleLogin}
             loading={loading}
-            disabled={!email || !password}
+            disabled={!email || !password || loading}
           >
-            Iniciar Sesión
+            {loading ? 'Iniciando...' : 'Iniciar Sesión'}
           </Button>
+          
+          {(!email || !password) && (
+            <Text style={styles.hintText}>
+              Por favor completa todos los campos
+            </Text>
+          )}
 
           <TouchableOpacity 
-            onPress={() => router.push('/(auth)/register')}
+            onPress={() => {
+              console.log('🟢 Navegando a registro...');
+              try {
+                router.push('/(auth)/register');
+                console.log('✅ Push a registro exitoso');
+              } catch (error) {
+                console.error('❌ Error al navegar:', error);
+              }
+            }}
             style={styles.linkContainer}
+            activeOpacity={0.7}
           >
             <Text style={styles.linkText}>
               ¿No tienes cuenta? <Text style={styles.linkBold}>Regístrate</Text>
@@ -147,14 +170,29 @@ const styles = StyleSheet.create({
   linkContainer: {
     marginTop: 16,
     alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    backgroundColor: 'rgba(115, 80, 110, 0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(115, 80, 110, 0.2)',
   },
   linkText: {
     fontSize: 14,
     color: '#6B7280',
+    textAlign: 'center',
   },
   linkBold: {
     color: '#73506E',
-    fontWeight: '600',
+    fontWeight: '700',
+    textDecorationLine: 'underline',
+  },
+  hintText: {
+    fontSize: 12,
+    color: '#F59E0B',
+    textAlign: 'center',
+    marginTop: 8,
+    fontWeight: '500',
   },
 });
 
