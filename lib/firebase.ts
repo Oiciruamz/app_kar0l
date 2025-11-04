@@ -1,13 +1,8 @@
 // lib/firebase.ts
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { initializeAuth, getAuth, type Auth } from "firebase/auth";
+import { getAuth, type Auth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
-// Importación de getReactNativePersistence con manejo de TypeScript
-// @ts-ignore - Esta función existe en tiempo de ejecución en firebase/auth
-import { getReactNativePersistence } from "firebase/auth";
 
 // Config (ok)
 const firebaseConfig = {
@@ -22,19 +17,8 @@ const firebaseConfig = {
 // App singleton
 export const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 
-// Auth con persistencia de AsyncStorage para React Native
-// Usamos try/catch porque initializeAuth solo puede llamarse una vez
-let auth: Auth;
-try {
-  auth = initializeAuth(app, {
-    persistence: getReactNativePersistence(AsyncStorage)
-  });
-} catch (error) {
-  // Si ya fue inicializado, obtenemos la instancia existente
-  auth = getAuth(app);
-}
-
-export { auth };
+// Auth - usa la persistencia por defecto de la plataforma
+export const auth: Auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
 export default app;
